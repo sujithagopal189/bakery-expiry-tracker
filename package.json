@@ -1,0 +1,10 @@
+{
+  "name": "bakery-expiry-management",
+  "version": "1.0.0",
+  "description": "Velan Department Bakery Product Expiry Management System",
+  "scripts": {
+    "start": "node backend/server.js",
+    "dev": "cd backend && npm run dev",
+    "install-backend": "cd backend && npm install"
+  }
+}

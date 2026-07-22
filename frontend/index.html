@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Velan Department - Bakery Product Expiry Management System</title>
+  <meta name="description" content="Secure login portal for Velan Department Bakery Product Expiry Management System. Track and manage bakery inventory freshness.">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ========== RESET ========== */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ========== ROOT VARIABLES ========== */
+    :root {
+      --brown-900: #3e1f00;
+      --brown-800: #5c2e05;
+      --brown-700: #6d3a0a;
+      --brown-600: #8b4513;
+      --brown-500: #a0522d;
+      --brown-400: #c4723a;
+      --brown-300: #d4a574;
+      --brown-200: #e8cba7;
+      --brown-100: #f4e4bc;
+      --brown-50:  #fdf6ec;
+      --cream:     #fff8ef;
+      --gold:      #d4a028;
+      --gold-light:#f0d78c;
+      --text-dark: #2c1810;
+      --text-mid:  #6f5642;
+      --text-light:#9f7a5c;
+      --error:     #d93025;
+      --success:   #2e7d32;
+      --white:     #ffffff;
+      --shadow-sm: 0 2px 8px rgba(62,31,0,0.08);
+      --shadow-md: 0 8px 30px rgba(62,31,0,0.12);
+      --shadow-lg: 0 20px 60px rgba(62,31,0,0.18);
+      --shadow-xl: 0 30px 80px rgba(62,31,0,0.25);
+    }
+
+    /* ========== PAGE LAYOUT ========== */
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(145deg, #3e1f00 0%, #6d3a0a 35%, #8b4513 60%, #a0522d 100%);
+      color: var(--text-dark);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* ========== ANIMATED BACKGROUND ========== */
+    .bg-particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.06;
+      background: var(--brown-200);
+      animation: particleDrift linear infinite;
+    }
+
+    .particle:nth-child(1)  { width:300px; height:300px; top:-5%;  left:10%;  animation-duration:25s; animation-delay:0s; }
+    .particle:nth-child(2)  { width:200px; height:200px; top:20%;  right:5%;  animation-duration:20s; animation-delay:3s; }
+    .particle:nth-child(3)  { width:150px; height:150px; bottom:10%;left:5%;  animation-duration:22s; animation-delay:1s; }
+    .particle:nth-child(4)  { width:250px; height:250px; top:50%;  right:15%; animation-duration:28s; animation-delay:5s; }
+    .particle:nth-child(5)  { width:180px; height:180px; top:70%;  left:30%;  animation-duration:18s; animation-delay:2s; }
+    .particle:nth-child(6)  { width:120px; height:120px; top:10%;  left:50%;  animation-duration:30s; animation-delay:4s; }
+
+    @keyframes particleDrift {
+      0%   { transform: translate(0, 0) scale(1);   opacity: 0.04; }
+      25%  { transform: translate(30px, -40px) scale(1.1); opacity: 0.08; }
+      50%  { transform: translate(-20px, 20px) scale(0.9); opacity: 0.06; }
+      75%  { transform: translate(40px, 30px) scale(1.05); opacity: 0.07; }
+      100% { transform: translate(0, 0) scale(1);   opacity: 0.04; }
+    }
+
+    /* Floating bakery icons */
+    .bg-icons {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .bg-icon {
+      position: absolute;
+      color: rgba(244, 228, 188, 0.08);
+      font-size: 3.5rem;
+      animation: iconFloat 8s ease-in-out infinite;
+    }
+
+    .bg-icon.i1 { top: 8%;  left: 8%;  animation-delay: 0s;   font-size: 4rem; }
+    .bg-icon.i2 { top: 15%; right: 12%; animation-delay: 2s;   font-size: 3rem; }
+    .bg-icon.i3 { bottom: 20%; left: 15%; animation-delay: 4s; font-size: 3.5rem; }
+    .bg-icon.i4 { bottom: 8%;  right: 8%; animation-delay: 1s;  font-size: 2.5rem; }
+    .bg-icon.i5 { top: 45%; left: 3%;  animation-delay: 3s;    font-size: 2.8rem; }
+    .bg-icon.i6 { top: 60%; right: 5%; animation-delay: 5s;    font-size: 3.2rem; }
+
+    @keyframes iconFloat {
+      0%, 100% { transform: translateY(0) rotate(0deg); }
+      50%      { transform: translateY(-18px) rotate(8deg); }
+    }
+
+    /* ========== TOP BRAND BAR ========== */
+    .brand-bar {
+      width: 100%;
+      padding: 18px 30px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      z-index: 10;
+      background: rgba(62, 31, 0, 0.3);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(244, 228, 188, 0.1);
+    }
+
+    .brand-bar i {
+      font-size: 1.8rem;
+      color: var(--gold-light);
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    }
+
+    .brand-bar-text h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--cream);
+      letter-spacing: 0.3px;
+    }
+
+    .brand-bar-text p {
+      font-size: 0.78rem;
+      color: var(--brown-200);
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+
+    /* ========== MAIN CONTAINER ========== */
+    .login-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 20px 50px;
+      position: relative;
+      z-index: 5;
+    }
+
+    /* ========== LOGIN CARD ========== */
+    .login-card {
+      width: 100%;
+      max-width: 460px;
+      background: rgba(255, 255, 255, 0.97);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 0;
+      box-shadow: var(--shadow-xl);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      overflow: hidden;
+      animation: cardEntry 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      opacity: 0;
+      transform: translateY(30px) scale(0.97);
+    }
+
+    @keyframes cardEntry {
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Card header with gradient */
+    .card-header {
+      background: linear-gradient(135deg, var(--brown-700) 0%, var(--brown-500) 100%);
+      padding: 32px 36px 28px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
+      animation: headerShimmer 6s ease-in-out infinite;
+    }
+
+    @keyframes headerShimmer {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(10%, 10%); }
+    }
+
+    .card-header .logo-circle {
+      width: 64px;
+      height: 64px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 16px;
+      animation: logoPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes logoPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.2); }
+      50%      { box-shadow: 0 0 0 12px rgba(255,255,255,0); }
+    }
+
+    .card-header .logo-circle i {
+      font-size: 1.6rem;
+      color: var(--cream);
+    }
+
+    .card-header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.55rem;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1.3;
+      margin-bottom: 8px;
+      position: relative;
+    }
+
+    .card-header p {
+      font-size: 0.85rem;
+      color: var(--brown-200);
+      opacity: 0.9;
+      line-height: 1.5;
+    }
+
+    .store-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255,255,255,0.15);
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-top: 14px;
+      font-size: 0.82rem;
+      color: var(--gold-light);
+      font-weight: 500;
+    }
+
+    .store-badge i { font-size: 0.75rem; }
+
+    /* Card body */
+    .card-body {
+      padding: 32px 36px 36px;
+    }
+
+    /* ========== FORM INPUTS ========== */
+    .input-group {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-mid);
+      margin-bottom: 7px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .input-field-wrapper {
+      position: relative;
+    }
+
+    .input-field-wrapper .field-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--brown-400);
+      font-size: 0.95rem;
+      z-index: 2;
+      transition: color 0.3s;
+    }
+
+    .input-field-wrapper input {
+      width: 100%;
+      padding: 14px 48px 14px 46px;
+      border: 2px solid var(--brown-200);
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-family: 'Inter', sans-serif;
+      color: var(--text-dark);
+      background: var(--cream);
+      transition: all 0.3s ease;
+      outline: none;
+    }
+
+    .input-field-wrapper input::placeholder {
+      color: var(--text-light);
+      font-weight: 400;
+    }
+
+    .input-field-wrapper input:focus {
+      border-color: var(--brown-500);
+      background: var(--white);
+      box-shadow: 0 0 0 4px rgba(139, 69, 19, 0.1), var(--shadow-sm);
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--brown-400);
+      cursor: pointer;
+      z-index: 2;
+      font-size: 1rem;
+      transition: color 0.3s ease;
+      padding: 4px;
+    }
+
+    .toggle-password:hover { color: var(--brown-600); }
+
+    /* ========== REMEMBER / CLEAR ========== */
+    .remember-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .remember-label {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 0.88rem;
+      color: var(--text-mid);
+    }
+
+    .remember-label input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--brown-600);
+      cursor: pointer;
+    }
+
+    .clear-saved-btn {
+      background: transparent;
+      border: 1px solid var(--error);
+      color: var(--error);
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.3s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .clear-saved-btn:hover {
+      background: var(--error);
+      color: var(--white);
+    }
+
+    /* ========== LOGIN BUTTON ========== */
+    .login-btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, var(--brown-700) 0%, var(--brown-500) 50%, var(--brown-400) 100%);
+      background-size: 200% 200%;
+      color: var(--white);
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .login-btn:hover {
+      background-position: 100% 0;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(139, 69, 19, 0.35);
+    }
+
+    .login-btn:hover::before { left: 100%; }
+
+    .login-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ========== AUTH ERROR ========== */
+    .auth-error {
+      margin-top: 16px;
+      color: var(--error);
+      font-size: 0.88rem;
+      text-align: center;
+      display: none;
+      padding: 10px 14px;
+      background: rgba(217, 48, 37, 0.06);
+      border-radius: 10px;
+      border: 1px solid rgba(217, 48, 37, 0.15);
+    }
+
+    /* ========== DIVIDER ========== */
+    .divider {
+      text-align: center;
+      margin: 28px 0;
+      position: relative;
+    }
+
+    .divider::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--brown-200), transparent);
+    }
+
+    .divider span {
+      background: var(--white);
+      padding: 0 16px;
+      color: var(--text-light);
+      font-size: 0.85rem;
+      position: relative;
+    }
+
+    /* ========== QUOTE SECTION ========== */
+    .quote-section {
+      text-align: center;
+    }
+
+    .quote-section p {
+      color: var(--brown-600);
+      font-style: italic;
+      font-size: 0.92rem;
+      font-family: 'Playfair Display', serif;
+    }
+
+    .quote-icons {
+      display: flex;
+      justify-content: center;
+      gap: 18px;
+      margin-top: 14px;
+    }
+
+    .quote-icons i {
+      color: var(--brown-300);
+      font-size: 1.15rem;
+      transition: all 0.3s ease;
+      cursor: default;
+    }
+
+    .quote-icons i:hover {
+      color: var(--brown-500);
+      transform: scale(1.25) rotate(-8deg);
+    }
+
+    /* ========== FOOTER ========== */
+    .page-footer {
+      text-align: center;
+      padding: 16px 20px 22px;
+      color: var(--brown-200);
+      font-size: 0.78rem;
+      opacity: 0.6;
+      z-index: 5;
+    }
+
+    /* ========== SHAKE ========== */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
+      20%, 40%, 60%, 80% { transform: translateX(6px); }
+    }
+
+    .shake { animation: shake 0.5s ease-in-out; }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 520px) {
+      .login-card { border-radius: 18px; }
+      .card-header { padding: 26px 24px 22px; }
+      .card-header h1 { font-size: 1.3rem; }
+      .card-body { padding: 24px 24px 28px; }
+      .brand-bar { padding: 14px 18px; }
+      .brand-bar-text h2 { font-size: 1.05rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Animated background particles -->
+  <div class="bg-particles">
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+    <div class="particle"></div>
+  </div>
+
+  <!-- Floating bakery icons -->
+  <div class="bg-icons">
+    <i class="fas fa-birthday-cake bg-icon i1"></i>
+    <i class="fas fa-bread-slice bg-icon i2"></i>
+    <i class="fas fa-cookie-bite bg-icon i3"></i>
+    <i class="fas fa-wheat-awn bg-icon i4"></i>
+    <i class="fas fa-ice-cream bg-icon i5"></i>
+    <i class="fas fa-mug-hot bg-icon i6"></i>
+  </div>
+
+  <!-- Top brand bar -->
+  <div class="brand-bar">
+    <i class="fas fa-bread-slice"></i>
+    <div class="brand-bar-text">
+      <h2>Bakery Product Expiry Management System</h2>
+      <p>Velan Department &bull; Freshness Tracking Portal</p>
+    </div>
+  </div>
+
+  <!-- Main login area -->
+  <div class="login-wrapper">
+    <div class="login-card" id="login-card">
+
+      <!-- Card header -->
+      <div class="card-header">
+        <div class="logo-circle">
+          <i class="fas fa-store-alt"></i>
+        </div>
+        <h1>Welcome Back</h1>
+        <p>Sign in to your bakery inventory dashboard</p>
+        <div class="store-badge">
+          <i class="fas fa-map-marker-alt"></i>
+          Velan Department Store
+        </div>
+      </div>
+
+      <!-- Card body / form -->
+      <div class="card-body">
+        <form id="auth-form">
+          <input type="hidden" id="storeName" value="Velan Department">
+          <input type="hidden" id="department" value="Bakery">
+
+          <div class="input-group">
+            <label for="email">Email Address</label>
+            <div class="input-field-wrapper">
+              <input type="email" id="email" placeholder="Enter your email" required autocomplete="email">
+              <i class="fas fa-envelope field-icon"></i>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="password">Password</label>
+            <div class="input-field-wrapper">
+              <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
+              <i class="fas fa-lock field-icon"></i>
+              <i class="far fa-eye toggle-password" id="togglePassword"></i>
+            </div>
+          </div>
+
+          <div class="remember-row">
+            <label class="remember-label" for="rememberMe">
+              <input type="checkbox" id="rememberMe">
+              Remember me
+            </label>
+            <button type="button" class="clear-saved-btn" id="clearSavedBtn" style="display: none;">
+              <i class="fas fa-trash-alt"></i> Clear saved
+            </button>
+          </div>
+
+          <button type="submit" class="login-btn" id="login-btn">
+            <i class="fas fa-sign-in-alt"></i>
+            <span>Sign In</span>
+          </button>
+
+          <div id="auth-error" class="auth-error"></div>
+        </form>
+
+        <div class="divider">
+          <span>Velan Bakery</span>
+        </div>
+
+        <div class="quote-section">
+          <p>"Quality is remembered long after the price is forgotten."</p>
+          <div class="quote-icons">
+            <i class="fas fa-bread-slice"></i>
+            <i class="fas fa-cookie-bite"></i>
+            <i class="fas fa-birthday-cake"></i>
+            <i class="fas fa-wheat-awn"></i>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="page-footer">
+    &copy; 2026 Velan Department &bull; Bakery Product Expiry Management System
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

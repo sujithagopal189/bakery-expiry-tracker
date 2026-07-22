@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preparing Dashboard...</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="login-page">
+  <div class="container">
+    <div class="login-card">
+      <div class="logo-section">
+        <i class="fas fa-store-alt logo-icon"></i>
+        <h1>Welcome back!</h1>
+        <p>Preparing your dashboard now...</p>
+      </div>
+      <div class="loading-box">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Please wait while we load your dashboard.</p>
+      </div>
+    </div>
+  </div>
+  <script>
+    setTimeout(() => {
+      window.location.href = 'dashboard.html';
+    }, 1500);
+  </script>
+</body>
+</html>

@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Velan Department - Bakery Product Expiry Management System</title>
+  <meta name="description" content="Secure login for Velan Department Bakery Product Expiry Management System">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --br9: #2c1503;
+      --br8: #4a2008;
+      --br7: #6d3a0a;
+      --br6: #8b4513;
+      --br5: #a0522d;
+      --br4: #c4723a;
+      --br3: #d4a574;
+      --br2: #e8cba7;
+      --br1: #f4e4bc;
+      --cream: #fff8ef;
+      --gold: #d4a028;
+      --gold-l: #f0d78c;
+      --text-d: #2c1810;
+      --text-m: #6f5642;
+      --text-l: #9f7a5c;
+      --err: #c0392b;
+      --white: #ffffff;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(160deg, var(--br9) 0%, var(--br8) 25%, var(--br7) 55%, var(--br5) 100%);
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* ── Floating decorative icons ── */
+    .floaters {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .floater {
+      position: absolute;
+      color: rgba(244,228,188,0.07);
+      animation: float ease-in-out infinite;
+    }
+    .floater:nth-child(1) { font-size:5rem;  top:5%;   left:6%;   animation-duration:7s;  animation-delay:0s; }
+    .floater:nth-child(2) { font-size:3.5rem;top:18%;  right:8%;  animation-duration:9s;  animation-delay:1.5s; }
+    .floater:nth-child(3) { font-size:4rem;  bottom:22%;left:10%; animation-duration:8s;  animation-delay:3s; }
+    .floater:nth-child(4) { font-size:3rem;  bottom:10%;right:10%;animation-duration:10s; animation-delay:0.5s; }
+    .floater:nth-child(5) { font-size:4.5rem;top:45%;  left:2%;  animation-duration:11s; animation-delay:2s; }
+    .floater:nth-child(6) { font-size:3.2rem;top:62%;  right:4%; animation-duration:6.5s;animation-delay:4s; }
+    .floater:nth-child(7) { font-size:2.8rem;top:30%;  left:40%; animation-duration:12s; animation-delay:1s; }
+
+    @keyframes float {
+      0%,100% { transform: translateY(0) rotate(0deg); }
+      50%      { transform: translateY(-22px) rotate(10deg); }
+    }
+
+    /* ── Top header bar ── */
+    .site-header {
+      position: relative;
+      z-index: 20;
+      background: rgba(44,21,3,0.55);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(240,215,140,0.12);
+      padding: 0 36px;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .site-header .header-logo {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, var(--br6), var(--br4));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+    }
+    .site-header .header-logo i { font-size: 1.2rem; color: var(--gold-l); }
+
+    .site-header .header-titles { flex: 1; }
+    .site-header .header-titles h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.18rem;
+      font-weight: 700;
+      color: var(--cream);
+      letter-spacing: 0.2px;
+      line-height: 1.2;
+    }
+    .site-header .header-titles p {
+      font-size: 0.75rem;
+      color: var(--br2);
+      opacity: 0.75;
+      margin-top: 2px;
+      letter-spacing: 0.4px;
+    }
+
+    .site-header .header-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(212,160,40,0.15);
+      border: 1px solid rgba(240,215,140,0.2);
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      color: var(--gold-l);
+      font-weight: 500;
+    }
+
+    /* ── Main content area ── */
+    .page-body {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 20px 40px;
+      position: relative;
+      z-index: 5;
+    }
+
+    /* ── Login card ── */
+    .login-card {
+      width: 100%;
+      max-width: 450px;
+      background: rgba(255,255,255,0.97);
+      border-radius: 22px;
+      overflow: hidden;
+      box-shadow: 0 32px 80px rgba(44,21,3,0.35), 0 8px 20px rgba(44,21,3,0.2);
+      border: 1px solid rgba(255,255,255,0.4);
+      animation: slideUp 0.65s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(40px) scale(0.96); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Card top section */
+    .card-top {
+      background: linear-gradient(135deg, var(--br8) 0%, var(--br6) 60%, var(--br4) 100%);
+      padding: 34px 36px 28px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-top::after {
+      content: '';
+      position: absolute;
+      width: 220px; height: 220px;
+      background: rgba(255,255,255,0.04);
+      border-radius: 50%;
+      top: -80px; right: -60px;
+    }
+
+    .card-top::before {
+      content: '';
+      position: absolute;
+      width: 150px; height: 150px;
+      background: rgba(255,255,255,0.03);
+      border-radius: 50%;
+      bottom: -50px; left: -40px;
+    }
+
+    .icon-ring {
+      width: 68px; height: 68px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.12);
+      border: 2px solid rgba(255,255,255,0.22);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 18px;
+      position: relative;
+      animation: pulse 3s ease-in-out infinite;
+    }
+    .icon-ring i { font-size: 1.7rem; color: var(--cream); }
+
+    @keyframes pulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.25); }
+      50%      { box-shadow: 0 0 0 14px rgba(255,255,255,0); }
+    }
+
+    .card-top h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 6px;
+      position: relative;
+    }
+
+    .card-top p {
+      font-size: 0.84rem;
+      color: var(--br2);
+      opacity: 0.88;
+      position: relative;
+    }
+
+    .store-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.18);
+      padding: 6px 18px;
+      border-radius: 30px;
+      margin-top: 16px;
+      font-size: 0.8rem;
+      color: var(--gold-l);
+      font-weight: 500;
+      position: relative;
+    }
+
+    /* Card bottom / form */
+    .card-bottom {
+      padding: 32px 36px 36px;
+      background: var(--white);
+    }
+
+    /* Input fields */
+    .field {
+      margin-bottom: 22px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-m);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .field-inner {
+      position: relative;
+    }
+
+    .field-inner .f-icon {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--br3);
+      font-size: 0.9rem;
+      pointer-events: none;
+      transition: color 0.3s;
+    }
+
+    .field-inner input {
+      width: 100%;
+      padding: 13px 46px 13px 44px;
+      border: 2px solid var(--br2);
+      border-radius: 11px;
+      font-size: 0.95rem;
+      font-family: 'Inter', sans-serif;
+      color: var(--text-d);
+      background: var(--cream);
+      outline: none;
+      transition: all 0.3s ease;
+    }
+
+    .field-inner input::placeholder { color: var(--text-l); }
+
+    .field-inner input:focus {
+      border-color: var(--br5);
+      background: var(--white);
+      box-shadow: 0 0 0 4px rgba(139,69,19,0.1);
+    }
+
+    .field-inner input:focus ~ .f-icon { color: var(--br6); }
+
+    .toggle-pw {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--br3);
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: color 0.3s;
+      padding: 3px;
+    }
+    .toggle-pw:hover { color: var(--br6); }
+
+    /* Remember row */
+    .rem-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .rem-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.87rem;
+      color: var(--text-m);
+      cursor: pointer;
+      user-select: none;
+    }
+    .rem-label input[type="checkbox"] {
+      width: 17px; height: 17px;
+      accent-color: var(--br6);
+      cursor: pointer;
+    }
+
+    .clear-btn {
+      display: none;
+      align-items: center;
+      gap: 5px;
+      background: transparent;
+      border: 1px solid var(--err);
+      color: var(--err);
+      padding: 4px 11px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.25s;
+    }
+    .clear-btn:hover { background: var(--err); color: var(--white); }
+
+    /* Submit button */
+    .sign-in-btn {
+      width: 100%;
+      padding: 14px;
+      background: linear-gradient(135deg, var(--br8) 0%, var(--br6) 50%, var(--br4) 100%);
+      color: var(--white);
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      transition: all 0.35s ease;
+      position: relative;
+      overflow: hidden;
+      letter-spacing: 0.3px;
+    }
+
+    .sign-in-btn::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+      transition: left 0.5s;
+    }
+    .sign-in-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(139,69,19,0.38);
+    }
+    .sign-in-btn:hover::after { left: 100%; }
+    .sign-in-btn:active { transform: translateY(0); }
+    .sign-in-btn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
+
+    /* Error box */
+    .err-box {
+      display: none;
+      margin-top: 15px;
+      padding: 10px 14px;
+      background: rgba(192,57,43,0.07);
+      border: 1px solid rgba(192,57,43,0.2);
+      border-radius: 10px;
+      color: var(--err);
+      font-size: 0.87rem;
+      text-align: center;
+    }
+
+    /* Divider */
+    .divider {
+      text-align: center;
+      position: relative;
+      margin: 26px 0 20px;
+    }
+    .divider::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(to right, transparent, var(--br2), transparent);
+    }
+    .divider span {
+      position: relative;
+      background: var(--white);
+      padding: 0 14px;
+      color: var(--text-l);
+      font-size: 0.82rem;
+    }
+
+    /* Quote */
+    .bakery-quote {
+      text-align: center;
+    }
+    .bakery-quote p {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: 0.9rem;
+      color: var(--br6);
+      line-height: 1.6;
+    }
+    .bakery-quote .q-icons {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      margin-top: 12px;
+    }
+    .bakery-quote .q-icons i {
+      color: var(--br3);
+      font-size: 1.1rem;
+      transition: all 0.3s;
+      cursor: default;
+    }
+    .bakery-quote .q-icons i:hover {
+      color: var(--br5);
+      transform: scale(1.3) rotate(-10deg);
+    }
+
+    /* Footer */
+    .page-footer {
+      text-align: center;
+      padding: 14px 20px 20px;
+      color: var(--br2);
+      font-size: 0.76rem;
+      opacity: 0.55;
+      position: relative;
+      z-index: 5;
+    }
+
+    /* Shake on error */
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      15%,45%,75% { transform: translateX(-7px); }
+      30%,60%,90% { transform: translateX(7px); }
+    }
+    .shake { animation: shake 0.5s ease-in-out; }
+
+    /* Responsive */
+    @media (max-width: 500px) {
+      .site-header { padding: 0 18px; height: 60px; }
+      .site-header .header-badge { display: none; }
+      .site-header .header-titles h1 { font-size: 1rem; }
+      .card-top { padding: 26px 24px 22px; }
+      .card-top h2 { font-size: 1.35rem; }
+      .card-bottom { padding: 24px 22px 28px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Floating bakery icons in background -->
+  <div class="floaters" aria-hidden="true">
+    <i class="fas fa-birthday-cake floater"></i>
+    <i class="fas fa-bread-slice floater"></i>
+    <i class="fas fa-cookie-bite floater"></i>
+    <i class="fas fa-wheat-awn floater"></i>
+    <i class="fas fa-ice-cream floater"></i>
+    <i class="fas fa-mug-hot floater"></i>
+    <i class="fas fa-seedling floater"></i>
+  </div>
+
+  <!-- ===== SITE HEADER / HEADING ===== -->
+  <header class="site-header">
+    <div class="header-logo">
+      <i class="fas fa-store-alt"></i>
+    </div>
+    <div class="header-titles">
+      <h1>Bakery Product Expiry Management System</h1>
+      <p>Velan Department &nbsp;&bull;&nbsp; Freshness Tracking Portal</p>
+    </div>
+    <div class="header-badge">
+      <i class="fas fa-shield-alt"></i>
+      Secure Login
+    </div>
+  </header>
+
+  <!-- ===== MAIN LOGIN AREA ===== -->
+  <main class="page-body">
+    <div class="login-card" id="login-card">
+
+      <!-- Card top / branding -->
+      <div class="card-top">
+        <div class="icon-ring">
+          <i class="fas fa-store-alt"></i>
+        </div>
+        <h2>Welcome Back</h2>
+        <p>Sign in to manage your bakery inventory</p>
+        <div class="store-tag">
+          <i class="fas fa-map-marker-alt"></i>
+          Velan Department Store
+        </div>
+      </div>
+
+      <!-- Card bottom / form -->
+      <div class="card-bottom">
+        <form id="auth-form" novalidate>
+          <input type="hidden" id="storeName" value="Velan Department">
+          <input type="hidden" id="department"  value="Bakery">
+
+          <!-- Email -->
+          <div class="field">
+            <label for="email">Email Address</label>
+            <div class="field-inner">
+              <input type="email" id="email" placeholder="Enter your email" required autocomplete="email">
+              <i class="fas fa-envelope f-icon"></i>
+            </div>
+          </div>
+
+          <!-- Password -->
+          <div class="field">
+            <label for="password">Password</label>
+            <div class="field-inner">
+              <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
+              <i class="fas fa-lock f-icon"></i>
+              <i class="far fa-eye toggle-pw" id="togglePassword" title="Show / Hide password"></i>
+            </div>
+          </div>
+
+          <!-- Remember me -->
+          <div class="rem-row">
+            <label class="rem-label" for="rememberMe">
+              <input type="checkbox" id="rememberMe">
+              Remember me
+            </label>
+            <button type="button" class="clear-btn" id="clearSavedBtn">
+              <i class="fas fa-trash-alt"></i> Clear saved
+            </button>
+          </div>
+
+          <!-- Submit -->
+          <button type="submit" class="sign-in-btn" id="login-btn">
+            <i class="fas fa-sign-in-alt"></i>
+            <span>Sign In</span>
+          </button>
+
+          <!-- Error message -->
+          <div id="auth-error" class="err-box"></div>
+        </form>
+
+        <div class="divider"><span>Velan Bakery</span></div>
+
+        <div class="bakery-quote">
+          <p>"Quality is remembered long after the price is forgotten."</p>
+          <div class="q-icons">
+            <i class="fas fa-bread-slice"></i>
+            <i class="fas fa-cookie-bite"></i>
+            <i class="fas fa-birthday-cake"></i>
+            <i class="fas fa-wheat-awn"></i>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="page-footer">
+    &copy; 2026 Velan Department &bull; Bakery Product Expiry Management System
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
