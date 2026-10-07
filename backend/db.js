@@ -1,15 +1,22 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 
+let isConnected = false;
+
 async function initializeDatabase() {
+  if (isConnected && mongoose.connection.readyState === 1) {
+    return mongoose.connection;
+  }
+
   const uri = process.env.MONGODB_URI;
 
   if (!uri) {
-    throw new Error('MONGODB_URI is not defined in environment variables. Check your .env file.');
+    throw new Error('MONGODB_URI is not defined in environment variables. Set it in Vercel project settings.');
   }
 
   try {
     await mongoose.connect(uri);
+    isConnected = true;
     console.log('✅ Connected to MongoDB Atlas');
 
     // Seed default admin user if not already present

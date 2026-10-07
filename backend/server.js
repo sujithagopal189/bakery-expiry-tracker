@@ -15,6 +15,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, '../frontend')));
 
+// Middleware to ensure DB connection on serverless API calls
+app.use('/api', async (req, res, next) => {
+  try {
+    await initializeDatabase();
+    next();
+  } catch (err) {
+    console.error('Database middleware connection error:', err);
+    res.status(500).json({ success: false, error: 'Database connection failed: ' + err.message });
+  }
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 
