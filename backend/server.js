@@ -45,8 +45,11 @@ async function startServer(port) {
   }
 }
 
+// Initialize database for serverless environments
+initializeDatabase().catch(err => console.error('Failed to initialize database:', err));
+
 if (require.main === module) {
   startServer();
 }
 
-module.exports = { app, startServer };
+module.exports = app;
