@@ -1,4 +1,6 @@
-const { pool } = require('../db');
+const Product = require('../models/Product');
+const Inventory = require('../models/Inventory');
+const ExpiryTracking = require('../models/ExpiryTracking');
 
 function getStatus(daysLeft) {
   if (daysLeft < 0) return 'expired';
@@ -6,21 +8,24 @@ function getStatus(daysLeft) {
   return 'fresh';
 }
 
+function formatProduct(p) {
+  return {
+    id: p._id,
+    name: p.product_name,
+    category: p.category,
+    manufacturingDate: p.manufacturing_date,
+    expiryDate: p.expiry_date,
+    quantity: p.quantity,
+    status: p.status,
+    createdAt: p.created_at,
+    updatedAt: p.updated_at
+  };
+}
+
 async function listProducts(req, res) {
   try {
-    const [rows] = await pool.execute('SELECT * FROM products ORDER BY created_at DESC');
-    const products = rows.map((row) => ({
-      id: row.product_id,
-      name: row.product_name,
-      category: row.category,
-      manufacturingDate: row.manufacturing_date,
-      expiryDate: row.expiry_date,
-      quantity: row.quantity,
-      status: row.status,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at
-    }));
-    return res.json(products);
+    const products = await Product.find().sort({ created_at: -1 });
+    return res.json(products.map(formatProduct));
   } catch (error) {
     console.error('List products error:', error);
     return res.status(500).json({ success: false, error: 'Unable to load products.' });
@@ -30,18 +35,25 @@ async function listProducts(req, res) {
 async function createProduct(req, res) {
   try {
     const { name, category, manufacturingDate, expiryDate, quantity } = req.body;
-    const status = getStatus(Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24)));
-    const [result] = await pool.execute(
-      'INSERT INTO products (product_name, category, manufacturing_date, expiry_date, quantity, status) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, category, manufacturingDate, expiryDate, quantity, status]
-    );
+    const daysLeft = Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+    const status = getStatus(daysLeft);
+    const now = new Date();
 
-    const [rows] = await pool.execute('SELECT * FROM products WHERE product_id = ?', [result.insertId]);
-    const product = rows[0];
-    await pool.execute('INSERT INTO inventory (product_id, quantity_available) VALUES (?, ?)', [product.product_id, product.quantity]);
-    await pool.execute('INSERT INTO expiry_tracking (product_id, expiry_status, alert_date) VALUES (?, ?, ?)', [product.product_id, status, product.expiry_date]);
+    const product = await Product.create({
+      product_name: name,
+      category,
+      manufacturing_date: manufacturingDate,
+      expiry_date: expiryDate,
+      quantity: Number(quantity),
+      status,
+      created_at: now,
+      updated_at: now
+    });
 
-    return res.status(201).json({ success: true, product: { id: product.product_id, name: product.product_name, category: product.category, manufacturingDate: product.manufacturing_date, expiryDate: product.expiry_date, quantity: product.quantity, status: product.status } });
+    await Inventory.create({ product_id: product._id, quantity_available: product.quantity, last_updated: now });
+    await ExpiryTracking.create({ product_id: product._id, expiry_status: status, alert_date: product.expiry_date });
+
+    return res.status(201).json({ success: true, product: formatProduct(product) });
   } catch (error) {
     console.error('Create product error:', error);
     return res.status(500).json({ success: false, error: 'Unable to create product.' });
@@ -52,10 +64,38 @@ async function updateProduct(req, res) {
   try {
     const { id } = req.params;
     const { name, category, manufacturingDate, expiryDate, quantity } = req.body;
-    const status = getStatus(Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24)));
-    await pool.execute('UPDATE products SET product_name = ?, category = ?, manufacturing_date = ?, expiry_date = ?, quantity = ?, status = ? WHERE product_id = ?', [name, category, manufacturingDate, expiryDate, quantity, status, id]);
-    const [rows] = await pool.execute('SELECT * FROM products WHERE product_id = ?', [id]);
-    return res.json({ success: true, product: rows[0] });
+    const daysLeft = Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+    const status = getStatus(daysLeft);
+
+    const product = await Product.findByIdAndUpdate(
+      id,
+      {
+        product_name: name,
+        category,
+        manufacturing_date: manufacturingDate,
+        expiry_date: expiryDate,
+        quantity: Number(quantity),
+        status,
+        updated_at: new Date()
+      },
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({ success: false, error: 'Product not found.' });
+    }
+
+    // Keep inventory and expiry tracking in sync
+    await Inventory.findOneAndUpdate(
+      { product_id: id },
+      { quantity_available: Number(quantity), last_updated: new Date() }
+    );
+    await ExpiryTracking.findOneAndUpdate(
+      { product_id: id },
+      { expiry_status: status, alert_date: expiryDate }
+    );
+
+    return res.json({ success: true, product: formatProduct(product) });
   } catch (error) {
     console.error('Update product error:', error);
     return res.status(500).json({ success: false, error: 'Unable to update product.' });
@@ -64,7 +104,10 @@ async function updateProduct(req, res) {
 
 async function deleteProduct(req, res) {
   try {
-    await pool.execute('DELETE FROM products WHERE product_id = ?', [req.params.id]);
+    const { id } = req.params;
+    await Product.findByIdAndDelete(id);
+    await Inventory.deleteMany({ product_id: id });
+    await ExpiryTracking.deleteMany({ product_id: id });
     return res.json({ success: true, message: 'Product deleted.' });
   } catch (error) {
     console.error('Delete product error:', error);

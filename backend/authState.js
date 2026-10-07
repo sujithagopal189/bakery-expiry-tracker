@@ -12,7 +12,7 @@ function replaceSession(userId, token) {
   if (previousToken && previousToken !== token) {
     revokedTokens.add(previousToken);
   }
-
+  
   activeSessions.set(normalizedUserId, token);
   return token;
 }
