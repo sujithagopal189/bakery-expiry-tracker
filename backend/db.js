@@ -1,44 +1,116 @@
-const mongoose = require('mongoose');
-require('dotenv').config();
+const admin = require('firebase-admin');
+const { getFirestore } = require('firebase-admin/firestore');
+const path = require('path');
+const fs = require('fs');
+const dotenv = require('dotenv');
+const bcrypt = require('bcryptjs');
 
-let isConnected = false;
+// Load environment variables
+dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
-async function initializeDatabase() {
-  if (isConnected && mongoose.connection.readyState === 1) {
-    return mongoose.connection;
+let dbInstance = null;
+let isInitialized = false;
+
+function loadServiceAccount() {
+  // 1. Direct JSON or Base64 string in env variable
+  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+    try {
+      return JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+    } catch (e) {
+      try {
+        const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_KEY, 'base64').toString('utf8');
+        return JSON.parse(decoded);
+      } catch (err) {}
+    }
   }
 
-  const uri = process.env.MONGODB_URI;
+  // 2. Candidate file paths for service account key
+  const candidatePaths = [
+    process.env.FIREBASE_CREDENTIALS_PATH,
+    process.env.GOOGLE_APPLICATION_CREDENTIALS,
+    path.resolve(__dirname, 'serviceAccountKey.json'),
+    path.resolve(__dirname, 'serviceAccountKey.json.json'),
+    path.resolve(process.cwd(), 'backend', 'serviceAccountKey.json'),
+    path.resolve(process.cwd(), 'backend', 'serviceAccountKey.json.json'),
+    path.resolve(process.cwd(), 'serviceAccountKey.json'),
+    path.resolve(process.cwd(), 'serviceAccountKey.json.json')
+  ].filter(Boolean);
 
-  if (!uri) {
-    throw new Error('MONGODB_URI is not defined in environment variables. Set it in Vercel project settings.');
+  for (const filePath of candidatePaths) {
+    if (fs.existsSync(filePath)) {
+      try {
+        const content = fs.readFileSync(filePath, 'utf8');
+        return JSON.parse(content);
+      } catch (err) {
+        console.warn(`Could not read service account key at ${filePath}:`, err.message);
+      }
+    }
+  }
+
+  return null;
+}
+
+function getDb() {
+  if (dbInstance) {
+    return dbInstance;
+  }
+
+  const apps = typeof admin.getApps === 'function' ? admin.getApps() : (admin.apps || []);
+  if (!apps.length) {
+    const cred = loadServiceAccount();
+    if (cred) {
+      admin.initializeApp({
+        credential: admin.cert(cred),
+        projectId: cred.project_id || process.env.FIREBASE_PROJECT_ID || 'expiery-f05e4'
+      });
+    } else {
+      admin.initializeApp();
+    }
+  }
+
+  dbInstance = getFirestore();
+  dbInstance.settings({ ignoreUndefinedProperties: true });
+  return dbInstance;
+}
+
+async function initializeDatabase() {
+  const db = getDb();
+
+  if (isInitialized) {
+    return db;
   }
 
   try {
-    await mongoose.connect(uri);
-    isConnected = true;
-    console.log('✅ Connected to MongoDB Atlas');
+    const usersRef = db.collection('users');
+    const adminSnapshot = await usersRef.where('email', '==', 'sujithagopal158@gmail.com').limit(1).get();
 
-    // Seed default admin user if not already present
-    const User = require('./models/User');
-    const adminExists = await User.findOne({ email: 'sujithagopal158@gmail.com' });
-    if (!adminExists) {
-      await User.create({
+    if (adminSnapshot.empty) {
+      const defaultPassword = process.env.DEFAULT_ADMIN_PASSWORD || 'sujithagopal';
+      const hashedPassword = bcrypt.hashSync(defaultPassword, 10);
+
+      await usersRef.add({
         user_name: 'Sujitha',
         email: 'sujithagopal158@gmail.com',
-        // bcrypt hash of "sujithagopal"
-        password: '$2a$10$0oslFiJoquF0xGK/nGdhMuHS9BF1iDIZuTjBrlO7K94fSBpT9QT9.',
+        password: hashedPassword,
         role: 'admin',
-        created_at: new Date('2026-07-01T16:58:29.569Z')
+        created_at: new Date('2026-07-01T16:58:29.569Z').toISOString()
       });
-      console.log('✅ Default admin user seeded');
+      console.log('✅ Default admin user seeded in Firestore');
     }
 
-    return mongoose.connection;
+    isInitialized = true;
+    console.log('✅ Connected to Cloud Firestore');
+    return db;
   } catch (error) {
-    console.error('❌ MongoDB Atlas connection error:', error.message);
+    console.error('❌ Cloud Firestore connection error:', error.message);
     throw error;
   }
 }
 
-module.exports = { initializeDatabase };
+module.exports = {
+  getDb,
+  initializeDatabase,
+  admin
+};

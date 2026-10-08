@@ -1,15 +1,19 @@
 /**
- * Migration Script: Local JSON → MongoDB Atlas
- * Run once with: npm run migrate
- * Migrates all existing users.json and products.json data to MongoDB Atlas.
+ * Migration Script: Local JSON → Cloud Firestore
+ * Run with: npm run migrate
+ * Migrates all existing users.json and products.json data to Cloud Firestore.
  * Safe to re-run — skips records that already exist (no duplicates).
  */
 
-const mongoose = require('mongoose');
 const fs = require('fs');
 const path = require('path');
-require('dotenv').config();
+const dotenv = require('dotenv');
 
+dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
+
+const { initializeDatabase } = require('./db');
 const User = require('./models/User');
 const Product = require('./models/Product');
 const Inventory = require('./models/Inventory');
@@ -19,6 +23,11 @@ const usersFile = path.join(__dirname, 'data', 'users.json');
 const productsFile = path.join(__dirname, 'data', 'products.json');
 
 async function migrateUsers() {
+  if (!fs.existsSync(usersFile)) {
+    console.log('⚠️ users.json not found, skipping user migration.');
+    return;
+  }
+
   const raw = JSON.parse(fs.readFileSync(usersFile, 'utf8'));
   console.log(`\n📋 Found ${raw.length} user(s) to migrate`);
 
@@ -36,11 +45,11 @@ async function migrateUsers() {
     }
 
     await User.create({
-      user_name:  u.user_name  || u.name || 'User',
+      user_name:  u.user_name || u.name || 'User',
       email,
       password:   u.password,
       role:       u.role || 'user',
-      created_at: u.created_at ? new Date(u.created_at) : new Date()
+      created_at: u.created_at ? new Date(u.created_at).toISOString() : new Date().toISOString()
     });
 
     console.log(`   ✅ Migrated user: ${email}`);
@@ -51,6 +60,11 @@ async function migrateUsers() {
 }
 
 async function migrateProducts() {
+  if (!fs.existsSync(productsFile)) {
+    console.log('⚠️ products.json not found, skipping product migration.');
+    return;
+  }
+
   const raw = JSON.parse(fs.readFileSync(productsFile, 'utf8'));
   console.log(`\n📦 Found ${raw.length} product(s) to migrate`);
 
@@ -59,9 +73,8 @@ async function migrateProducts() {
 
   for (const p of raw) {
     const product_name = p.product_name || p.name || 'Product';
-    const created_at   = p.created_at ? new Date(p.created_at) : new Date();
+    const created_at   = p.created_at ? new Date(p.created_at).toISOString() : new Date().toISOString();
 
-    // Idempotency check: match by name + created_at timestamp (millisecond precision)
     const exists = await Product.findOne({ product_name, created_at });
 
     if (exists) {
@@ -70,7 +83,7 @@ async function migrateProducts() {
       continue;
     }
 
-    const updated_at   = p.updated_at ? new Date(p.updated_at) : created_at;
+    const updated_at = p.updated_at ? new Date(p.updated_at).toISOString() : created_at;
 
     const product = await Product.create({
       product_name,
@@ -83,16 +96,18 @@ async function migrateProducts() {
       updated_at
     });
 
+    const productId = String(product.id || product._id);
+
     // Mirror: Inventory
     await Inventory.create({
-      product_id:         product._id,
+      product_id:         productId,
       quantity_available: product.quantity,
       last_updated:       updated_at
     });
 
     // Mirror: ExpiryTracking
     await ExpiryTracking.create({
-      product_id:    product._id,
+      product_id:    productId,
       expiry_status: product.status,
       alert_date:    product.expiry_date
     });
@@ -105,24 +120,18 @@ async function migrateProducts() {
 }
 
 async function main() {
-  const uri = process.env.MONGODB_URI;
-  if (!uri) {
-    console.error('❌ MONGODB_URI not found in .env');
-    process.exit(1);
-  }
-
-  console.log('🔌 Connecting to MongoDB Atlas...');
-  await mongoose.connect(uri);
-  console.log('✅ Connected to MongoDB Atlas\n');
+  console.log('🔌 Connecting to Cloud Firestore...');
+  await initializeDatabase();
+  console.log('✅ Connected to Cloud Firestore\n');
 
   await migrateUsers();
   await migrateProducts();
 
-  await mongoose.disconnect();
-  console.log('\n🎉 Migration complete! All data is now in MongoDB Atlas.');
+  console.log('\n🎉 Migration complete! All data is now stored in Cloud Firestore.');
+  process.exit(0);
 }
 
 main().catch((err) => {
-  console.error('\n❌ Migration failed:', err.message);
+  console.error('\n❌ Migration failed:', err.stack || err.message);
   process.exit(1);
 });

@@ -10,7 +10,7 @@ function getStatus(daysLeft) {
 
 function formatProduct(p) {
   return {
-    id: p._id,
+    id: p._id || p.id,
     name: p.product_name,
     category: p.category,
     manufacturingDate: p.manufacturing_date,
@@ -37,7 +37,7 @@ async function createProduct(req, res) {
     const { name, category, manufacturingDate, expiryDate, quantity } = req.body;
     const daysLeft = Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
     const status = getStatus(daysLeft);
-    const now = new Date();
+    const now = new Date().toISOString();
 
     const product = await Product.create({
       product_name: name,
@@ -50,8 +50,9 @@ async function createProduct(req, res) {
       updated_at: now
     });
 
-    await Inventory.create({ product_id: product._id, quantity_available: product.quantity, last_updated: now });
-    await ExpiryTracking.create({ product_id: product._id, expiry_status: status, alert_date: product.expiry_date });
+    const productId = String(product.id || product._id);
+    await Inventory.create({ product_id: productId, quantity_available: product.quantity, last_updated: now });
+    await ExpiryTracking.create({ product_id: productId, expiry_status: status, alert_date: product.expiry_date });
 
     return res.status(201).json({ success: true, product: formatProduct(product) });
   } catch (error) {
@@ -66,6 +67,7 @@ async function updateProduct(req, res) {
     const { name, category, manufacturingDate, expiryDate, quantity } = req.body;
     const daysLeft = Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
     const status = getStatus(daysLeft);
+    const now = new Date().toISOString();
 
     const product = await Product.findByIdAndUpdate(
       id,
@@ -76,7 +78,7 @@ async function updateProduct(req, res) {
         expiry_date: expiryDate,
         quantity: Number(quantity),
         status,
-        updated_at: new Date()
+        updated_at: now
       },
       { new: true }
     );
@@ -88,7 +90,7 @@ async function updateProduct(req, res) {
     // Keep inventory and expiry tracking in sync
     await Inventory.findOneAndUpdate(
       { product_id: id },
-      { quantity_available: Number(quantity), last_updated: new Date() }
+      { quantity_available: Number(quantity), last_updated: now }
     );
     await ExpiryTracking.findOneAndUpdate(
       { product_id: id },

@@ -5,6 +5,10 @@ node_modules/
 # Environment variables (sensitive data)
 .env
 backend/.env
+*serviceAccountKey*.json
+*.json.json
+serviceAccountKey.json
+backend/serviceAccountKey.json
 
 # Logs
 logs/

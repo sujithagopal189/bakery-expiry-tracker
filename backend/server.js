@@ -1,7 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config();
+const dotenv = require('dotenv');
+
+dotenv.config();
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
@@ -56,11 +60,10 @@ async function startServer(port) {
   }
 }
 
-// Initialize database for serverless environments
-initializeDatabase().catch(err => console.error('Failed to initialize database:', err));
-
 if (require.main === module) {
   startServer();
 }
 
+app.startServer = startServer;
 module.exports = app;
+module.exports.startServer = startServer;

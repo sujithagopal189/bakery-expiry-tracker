@@ -15,7 +15,7 @@ A full-stack web application for tracking bakery product expiry dates with authe
 
 - **Frontend:** HTML, CSS, JavaScript
 - **Backend:** Node.js, Express
-- **Database:** MongoDB with Mongoose
+- **Database:** Google Cloud Firestore (Firebase Admin SDK)
 - **Authentication:** JWT
 
 ## Setup Instructions
@@ -23,7 +23,7 @@ A full-stack web application for tracking bakery product expiry dates with authe
 ### Prerequisites
 
 - Node.js installed
-- MongoDB installed and running on localhost:27017
+- Firebase project service account key (`backend/serviceAccountKey.json`)
 
 ### Installation
 
@@ -39,10 +39,12 @@ A full-stack web application for tracking bakery product expiry dates with authe
    npm install
    ```
 
-4. Update the `.env` file with your MongoDB URI and JWT secret:
+4. Place your Firebase service account JSON key in `backend/serviceAccountKey.json` and configure `backend/.env`:
    ```
-   MONGO_URI=mongodb://localhost:27017/bakery-tracker
+   PORT=5000
    JWT_SECRET=your_jwt_secret_key_here
+   FIREBASE_PROJECT_ID=expiery-f05e4
+   DEFAULT_ADMIN_PASSWORD=sujithagopal
    ```
 
 5. Start the backend server:

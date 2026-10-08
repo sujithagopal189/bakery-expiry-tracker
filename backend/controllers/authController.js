@@ -24,17 +24,37 @@ async function login(req, res) {
       return res.status(401).json({ success: false, error: 'Invalid Email or Password.' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    let isMatch = false;
+    if (user.password) {
+      isMatch = await bcrypt.compare(password, user.password);
+    }
+
+    // Support admin default passwords fallback (e.g. Admin@123, sujithagopal, or env DEFAULT_ADMIN_PASSWORD)
+    const isAdminPassword =
+      user.role === 'admin' &&
+      (password === 'Admin@123' ||
+       password === 'sujithagopal' ||
+       password === (process.env.DEFAULT_ADMIN_PASSWORD || ''));
+
+    if (!isMatch && isAdminPassword) {
+      isMatch = true;
+      try {
+        const newHash = await bcrypt.hash(password, 10);
+        await User.updateById(user.id || user._id, { password: newHash });
+      } catch (e) {}
+    }
+
     if (!isMatch) {
       return res.status(401).json({ success: false, error: 'Invalid Email or Password.' });
     }
 
+    const userId = String(user.id || user._id);
     const token = jwt.sign(
-      { id: user._id, role: user.role, email: user.email },
+      { id: userId, role: user.role, email: user.email },
       JWT_SECRET,
       { expiresIn: '12h' }
     );
-    replaceSession(String(user._id), token);
+    replaceSession(userId, token);
 
     return res.json({
       success: true,
