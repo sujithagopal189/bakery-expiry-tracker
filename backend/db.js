@@ -14,22 +14,40 @@ let dbInstance = null;
 let isInitialized = false;
 
 function loadServiceAccount() {
-  // 1. Direct JSON or Base64 string in env variable
-  if (process.env.FIREBASE_SERVICE_ACCOUNT_KEY) {
+  // 1. Direct JSON or Base64 string in env variable (e.g. on Render, Vercel, Heroku)
+  const envKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY || process.env.FIREBASE_SERVICE_ACCOUNT || process.env.GOOGLE_CREDENTIALS;
+  if (envKey) {
     try {
-      return JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY);
+      return JSON.parse(envKey);
     } catch (e) {
       try {
-        const decoded = Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT_KEY, 'base64').toString('utf8');
+        const decoded = Buffer.from(envKey, 'base64').toString('utf8');
         return JSON.parse(decoded);
       } catch (err) {}
     }
   }
 
-  // 2. Candidate file paths for service account key
+  // 2. Discrete environment variables
+  const projectId = process.env.FIREBASE_PROJECT_ID || process.env.PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL || process.env.CLIENT_EMAIL;
+  let privateKey = process.env.FIREBASE_PRIVATE_KEY || process.env.PRIVATE_KEY;
+
+  if (projectId && clientEmail && privateKey) {
+    // Handle escaped newlines from environment variables
+    privateKey = privateKey.replace(/\\n/g, '\n');
+    return {
+      project_id: projectId,
+      client_email: clientEmail,
+      private_key: privateKey
+    };
+  }
+
+  // 3. Candidate file paths (local workspace, Render Secret Files, etc.)
   const candidatePaths = [
     process.env.FIREBASE_CREDENTIALS_PATH,
     process.env.GOOGLE_APPLICATION_CREDENTIALS,
+    '/etc/secrets/serviceAccountKey.json',
+    '/etc/secrets/serviceAccountKey.json.json',
     path.resolve(__dirname, 'serviceAccountKey.json'),
     path.resolve(__dirname, 'serviceAccountKey.json.json'),
     path.resolve(process.cwd(), 'backend', 'serviceAccountKey.json'),
@@ -66,7 +84,10 @@ function getDb() {
         projectId: cred.project_id || process.env.FIREBASE_PROJECT_ID || 'expiery-f05e4'
       });
     } else {
-      admin.initializeApp();
+      console.warn('⚠️ No Firebase service account credentials found. Attempting Application Default Credentials...');
+      admin.initializeApp({
+        projectId: process.env.FIREBASE_PROJECT_ID || 'expiery-f05e4'
+      });
     }
   }
 
