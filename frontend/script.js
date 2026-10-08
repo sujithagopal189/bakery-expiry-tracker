@@ -157,10 +157,10 @@ function initializeLogin() {
     }
 
     const data = {
-      storeName: storeNameInput?.value,
-      department: departmentInput?.value,
-      email: emailInput?.value,
-      password: passwordInput?.value
+      storeName: (storeNameInput?.value || '').trim(),
+      department: (departmentInput?.value || '').trim(),
+      email: (emailInput?.value || '').trim(),
+      password: passwordInput?.value || ''
     };
 
     try {

@@ -33,6 +33,8 @@ app.use('/api', async (req, res, next) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productRoutes);
 
+app.get('/favicon.ico', (_req, res) => res.status(204).end());
+
 app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'Backend is healthy' });
 });
